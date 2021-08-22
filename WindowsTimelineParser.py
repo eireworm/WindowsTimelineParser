@@ -1,9 +1,9 @@
 from os import environ
 from os import remove
-from os import walk
 from PyPDF2 import PdfFileMerger
 from time import strftime
 from time import localtime
+import glob
 import json
 import matplotlib.pyplot as plt
 import pandas
@@ -12,13 +12,31 @@ import sqlite3
 
 # returns the absolute path to the ActivitiesCache.db database file
 def get_activities_cache_db_absolute_path():
-    directory = 'C:/Users/' + str(environ['username']) + '/AppData/Local/ConnectedDevicesPlatform/'
-    dir_list = [x[1] for x in walk(directory)][0]
-    for dir in dir_list:
-        match = r'.\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b'
-        m = re.findall(match, str(dir))
-        if m:
-            return str(directory) + str(dir) + "/ActivitiesCache.db"
+    directory = 'C:\\Users\\' + str(environ['username']) + '\\AppData\\Local\\ConnectedDevicesPlatform\\'
+    db_files = glob.glob(directory + "/**/ActivitiesCache.db", recursive = True)
+    if len(db_files) == 0:
+        print("Couldn't find ActivitiesCache.db")
+    elif len(db_files) == 1:
+        return str(db_files[0])
+    elif len(db_files) > 1:
+        print("\nMore than one ActivityCache.db files were found. Please select which one you wish to use. NOTE: If you are unsure, you can try them all until you find what you want!")
+        i = 0
+        while i < len(db_files):
+            print('[' + str((i+1)) + ']', str(db_files[i]))
+            i += 1
+        hasChosen = False
+        while not hasChosen:
+            try: 
+                choice = int(input("Choose 1,2,...: ")) - 1
+                if choice > len(db_files) or choice <= 0:
+                    continue
+                hasChosen = True
+                return str(db_files[choice])
+            except: 
+                continue
+    else:
+        print("There was a problem finding the file... ", db_files)
+        exit()
 
 # connect to database
 def establish_connection():
